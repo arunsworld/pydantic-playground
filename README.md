@@ -4,6 +4,7 @@
 
 ```
 pip install -r requirements.txt
+cp .env.example .env               (then modify it)
 ```
 
 # Running mcp server

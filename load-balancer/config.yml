@@ -1,0 +1,36 @@
+services:
+  - name: mcp
+    addr: :1960
+    recorders:
+      - name: recorder-0
+        record: recorder.service.handler
+    handler:
+      type: tcp
+    listener:
+      type: tcp
+    forwarder:
+      nodes:
+        - name: target-0
+          addr: localhost:8910
+        - name: target-1
+          addr: localhost:8911
+  - name: agent
+    addr: :1961
+    recorders:
+      - name: recorder-0
+        record: recorder.service.handler
+    handler:
+      type: tcp
+    listener:
+      type: tcp
+    forwarder:
+      nodes:
+        - name: target-0
+          addr: localhost:9010
+        - name: target-1
+          addr: localhost:9011
+recorders:
+  - name: recorder-0
+    file:
+      path: /tmp/traffic.txt
+      sep: "\n"

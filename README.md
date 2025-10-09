@@ -27,8 +27,12 @@ python mcp-auth-agui/client.py 9010     (node 1)
 python mcp-auth-agui/client.py 9011     (node 2)
 ```
 
+# Load Balancing
+
+* See ```load-balancer``` directory
+
 # Performance testing
 
 ```
-./agui_perf_testing -endpoint="http://localhost:1961" -c=10
+./load-tester/agui_perf_testing -endpoint="http://localhost:1961" -c=10
 ```

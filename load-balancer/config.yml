@@ -29,6 +29,18 @@ services:
           addr: localhost:9010
         - name: target-1
           addr: localhost:9011
+  - name: ui
+    addr: :1962
+    handler:
+      type: tcp
+    listener:
+      type: tcp
+    forwarder:
+      nodes:
+        - name: target-0
+          addr: localhost:5056
+        - name: target-1
+          addr: localhost:5055
 recorders:
   - name: recorder-0
     file:

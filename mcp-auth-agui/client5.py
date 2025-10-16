@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 from typing import Any
 from fastapi import FastAPI, Request
 from pydantic_ai.ag_ui import handle_ag_ui_request
+from pydantic_ai.providers.litellm import LiteLLMProvider
+from pydantic_ai.models.openai import OpenAIChatModel
 import uvicorn
 import sys
 import os
-import asyncio
 load_dotenv()
 
 
@@ -42,8 +43,14 @@ async def process_tool_call(
     # Call the MCP tool with metadata
     return await call_tool(name, tool_args, metadata)
 
+
+litellm_model = OpenAIChatModel(
+    'gpt',
+    provider=LiteLLMProvider(api_base='http://0.0.0.0:4000',api_key='ab-007-120987'),  
+)
+
 agent = Agent(
-    agent_model,
+    litellm_model,
     instructions="""You are a helpful assistant that can answer questions with the tools available to you. 
     If you cannot find an appropriate tool, you should respond by saying that you are unable to answer the question.
     You must use the tools available to you to answer the question.
@@ -63,14 +70,7 @@ async def run_agent(request: Request):
     jwttoken = request.headers.get("jwttoken")
     print(f"jwttoken: {jwttoken}")
 
-    server = MCPServerStreamableHTTP(mcp_endpoint, process_tool_call=process_tool_call)
-
-    # async with agent:
-    #     return await handle_ag_ui_request(
-    #         agent,
-    #         request,
-    #         deps={'jwttoken': jwttoken},
-    #     )
+    server = MCPServerStreamableHTTP(mcp_endpoint, process_tool_call=process_tool_call)  
 
     return await handle_ag_ui_request(
         agent,
@@ -78,15 +78,6 @@ async def run_agent(request: Request):
         deps={'jwttoken': jwttoken},
         toolsets=[server],
     )
-
-# @agent.tool_plain
-# async def write_essay(topic: str) -> str:
-#     """Write an essay on the given topic."""
-#     # This would typically generate an essay
-#     await asyncio.sleep(1)
-#     print(f"Essay draft on '{topic}' has been generated. Please review.")
-#     # The agent will wait for user feedback before proceeding
-#     return f"Essay draft on '{topic}' has been generated. Please review."
 
 if __name__ == "__main__":
     uvicorn.run(

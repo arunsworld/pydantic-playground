@@ -7,6 +7,12 @@ pip install -r requirements.txt
 cp .env.example .env               (then modify it)
 ```
 
+# Running multi-agent service
+
+```
+APP_PORT=9010 python -m multi-agent.main
+```
+
 # Running mcp server
 
 ```

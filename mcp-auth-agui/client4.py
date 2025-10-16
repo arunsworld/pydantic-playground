@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 from typing import Any
 from fastapi import FastAPI, Request
 from pydantic_ai.ag_ui import handle_ag_ui_request
+from pydantic_ai.providers.ollama import OllamaProvider
+from pydantic_ai.models.openai import OpenAIChatModel
 import uvicorn
 import sys
 import os
-import asyncio
 load_dotenv()
 
 
@@ -24,8 +25,7 @@ if len(sys.argv) > 1:
 
 mcp_endpoint = os.environ.get("MCP_ENDPOINT", "http://localhost:8910/mcp")
 print(f"mcp_endpoint: {mcp_endpoint}")
-agent_model = os.environ.get("AGENT_MODEL", "openai:gpt-4.1")
-print(f"agent_model: {agent_model}")
+print(f"agent_model: ollama (hardcoded)")
 
 async def process_tool_call(
     ctx: RunContext[Any],
@@ -40,10 +40,19 @@ async def process_tool_call(
     }
 
     # Call the MCP tool with metadata
-    return await call_tool(name, tool_args, metadata)
+    result = await call_tool(name, tool_args, metadata)
+
+    print(f"result: {result}")
+    return result
+
+
+ollama_model = OpenAIChatModel(
+    model_name='gpt-oss:20b',
+    provider=OllamaProvider(base_url='http://localhost:11434/v1'),  
+)
 
 agent = Agent(
-    agent_model,
+    ollama_model,
     instructions="""You are a helpful assistant that can answer questions with the tools available to you. 
     If you cannot find an appropriate tool, you should respond by saying that you are unable to answer the question.
     You must use the tools available to you to answer the question.
@@ -63,14 +72,7 @@ async def run_agent(request: Request):
     jwttoken = request.headers.get("jwttoken")
     print(f"jwttoken: {jwttoken}")
 
-    server = MCPServerStreamableHTTP(mcp_endpoint, process_tool_call=process_tool_call)
-
-    # async with agent:
-    #     return await handle_ag_ui_request(
-    #         agent,
-    #         request,
-    #         deps={'jwttoken': jwttoken},
-    #     )
+    server = MCPServerStreamableHTTP(mcp_endpoint, process_tool_call=process_tool_call)  
 
     return await handle_ag_ui_request(
         agent,
@@ -78,15 +80,6 @@ async def run_agent(request: Request):
         deps={'jwttoken': jwttoken},
         toolsets=[server],
     )
-
-# @agent.tool_plain
-# async def write_essay(topic: str) -> str:
-#     """Write an essay on the given topic."""
-#     # This would typically generate an essay
-#     await asyncio.sleep(1)
-#     print(f"Essay draft on '{topic}' has been generated. Please review.")
-#     # The agent will wait for user feedback before proceeding
-#     return f"Essay draft on '{topic}' has been generated. Please review."
 
 if __name__ == "__main__":
     uvicorn.run(

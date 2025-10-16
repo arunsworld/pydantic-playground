@@ -1,5 +1,3 @@
-import sys
-import os
 import uvicorn
 from fastapi import FastAPI, Request
 from pydantic_ai.ag_ui import handle_ag_ui_request
